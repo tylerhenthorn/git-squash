@@ -22,6 +22,12 @@ def main():
         "-b", "--branch",
         help="Branch name (default: current branch)"
     )
+    parser.add_argument(
+        "-B", "--base",
+        metavar="COMMIT",
+        default=None,
+        help="Squash commits since this commit/ref (default: squash entire history)"
+    )
 
     args = parser.parse_args()
 
@@ -29,7 +35,8 @@ def main():
         squash_history(
             repo_path=args.repo_path,
             message=args.message,
-            branch=args.branch
+            branch=args.branch,
+            base=args.base
         )
         print(f"Successfully squashed history: {args.message}")
     except GitSquashError as e:

@@ -11,13 +11,25 @@ def _run(*cmd, cwd=None):
     return subprocess.run(cmd, capture_output=True, text=True, check=True, cwd=cwd)
 
 
-def squash_history(repo_path=".", message="Squashed", branch=None):
+def squash_history(repo_path=".", message="Squashed", branch=None, base=None):
     repo_path = Path(repo_path).resolve()
 
     try:
         _run("git", "rev-parse", "--git-dir", cwd=repo_path)
     except (subprocess.CalledProcessError, FileNotFoundError):
         raise GitSquashError(f"Not a git repository: {repo_path}")
+
+    if base is not None:
+        try:
+            _run("git", "reset", "--soft", base, cwd=repo_path)
+            _run("git", "commit", "-m", message, cwd=repo_path)
+        except subprocess.CalledProcessError as e:
+            try:
+                _run("git", "reset", "--hard", "ORIG_HEAD", cwd=repo_path)
+            except Exception:
+                pass
+            raise GitSquashError(f"Git operation failed: {e.stderr or e}")
+        return
 
     try:
         if branch is None:
